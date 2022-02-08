@@ -18,7 +18,11 @@ export class GraphqlOrmDataSource<TContext = any> extends DataSource<TContext> {
     super();
     this.orm = ormConfig.orm;
     this.useCache = !! ormConfig.cache;
-    this.cacheTtl = ormConfig.cache?.milliseconds ?? 1000 * 30;
+    this.cacheTtl = Math.floor(
+      (ormConfig.cache?.milliseconds && ormConfig.cache.milliseconds / 1000) ??
+      ormConfig.cache?.seconds ??
+      1000 * 30
+    );
   }
 
   initialize(config: DataSourceConfig<TContext>): void {
@@ -60,7 +64,7 @@ export class GraphqlOrmDataSource<TContext = any> extends DataSource<TContext> {
 
   protected cacheSet(key: string, val: any): void {
     if (this.cache) {
-      const cacheStr = EJSON.stringify(val); 
+      const cacheStr = EJSON.stringify(val);
       this.cache.set(key, cacheStr, { ttl: this.cacheTtl });
     }
   }
@@ -89,7 +93,7 @@ export class GraphqlOrmDataSource<TContext = any> extends DataSource<TContext> {
     const repo = this.repo<TEntity>(target);
     const repoName = typeof repo;
     let data: Array<TEntity | undefined> = [];
-    
+
     if (this.cache) {
       let key: string;
       const idsNotFound: any[] = [];
@@ -112,7 +116,7 @@ export class GraphqlOrmDataSource<TContext = any> extends DataSource<TContext> {
       const rows = await repo.findByIds(ids, options);
       data = rows;
     }
-    
+
     return Promise.resolve(data);
   }
 
